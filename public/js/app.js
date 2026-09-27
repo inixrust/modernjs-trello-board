@@ -186,34 +186,153 @@ function reportError(userMessage, error) {
 }
 
 // ===== 5. Handler (aksi pengguna) =====
-// Pola: await API -> perbarui state TANPA mutasi -> renderBoard().
-// Bila gagal: reportError("Pesan umum untuk pengguna.", error).
+async function handleCreateList(title) {
+  try {
+    const newList = await createList({
+      boardId: state.board.id,
+      title,
+      position: getNextPosition(state.lists),
+    });
+    state.lists = [...state.lists, newList];
+    renderBoard();
+  } catch (error) {
+    reportError("Gagal menambah list. Coba lagi.", error);
+  }
+}
 
-// TODO: POST list baru di akhir (getNextPosition(state.lists))
-async function handleCreateList(title) {}
+async function handleDeleteList(listId) {
+  const list = state.lists.find((item) => item.id === listId);
+  if (!list) return;
 
-// TODO: guard bila list tidak ada, konfirmasi, DELETE, buang list DAN card-nya
-async function handleDeleteList(listId) {}
+  const cardCount = getCardsByList(listId).length;
+  const question = `Hapus list "${list.title}" beserta ${cardCount} card?`;
+  if (!confirm(question)) return;
 
-// TODO: POST card baru di akhir list
-async function handleCreateCard(listId, title) {}
+  try {
+    await deleteList(listId);
+    state.lists = state.lists.filter((item) => item.id !== listId);
+    state.cards = state.cards.filter((card) => card.listId !== listId);
+    renderBoard();
+  } catch (error) {
+    reportError("Gagal menghapus list. Coba lagi.", error);
+  }
+}
 
-// TODO: PATCH card, ganti card di state dengan data dari server
-async function handleUpdateCard(cardId, changes) {}
+async function handleCreateCard(listId, title) {
+  try {
+    const newCard = await createCard({
+      listId,
+      title,
+      description: "",
+      position: getNextPosition(getCardsByList(listId)),
+      createdAt: new Date().toISOString(),
+    });
+    state.cards = [...state.cards, newCard];
+    renderBoard();
+  } catch (error) {
+    reportError("Gagal menambah card. Coba lagi.", error);
+  }
+}
 
-// TODO: DELETE card, buang dari state
-async function handleDeleteCard(cardId) {}
+async function handleUpdateCard(cardId, changes) {
+  try {
+    const updatedCard = await updateCard(cardId, changes);
+    state.cards = state.cards.map((card) =>
+      card.id === cardId ? updatedCard : card,
+    );
+    renderBoard();
+  } catch (error) {
+    reportError("Gagal menyimpan card. Coba lagi.", error);
+  }
+}
 
-// TODO: guard bila card tidak ada, isi #edit-form, simpan cardId, showModal()
-function openEditDialog(cardId) {}
+async function handleDeleteCard(cardId) {
+  try {
+    await deleteCard(cardId);
+    state.cards = state.cards.filter((card) => card.id !== cardId);
+    renderBoard();
+  } catch (error) {
+    reportError("Gagal menghapus card. Coba lagi.", error);
+  }
+}
+
+function openEditDialog(cardId) {
+  const card = state.cards.find((item) => item.id === cardId);
+  if (!card) return;
+
+  editDialog.dataset.cardId = cardId;
+  editForm.elements.title.value = card.title;
+  editForm.elements.description.value = card.description ?? "";
+  editDialog.showModal();
+}
 
 // ===== 6. Event listener (event delegation) =====
-// TODO 1: click pada boardEl -> closest("button[data-action]") -> switch aksi
-// TODO 0: whileDisabled(form, action) -> nonaktifkan tombol submit selama request
-// TODO 2: submit pada boardEl -> isValidTitle -> handleCreateCard
-// TODO 3: submit pada addListForm -> handleCreateList
-// TODO 4: submit pada editForm -> handleUpdateCard -> editDialog.close()
-// TODO 5: click tombol data-action="cancel-edit" -> editDialog.close()
+boardEl.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-action]");
+  if (!button) return;
+
+  const listId = Number(button.closest(".list").dataset.listId);
+  const cardEl = button.closest(".card");
+  const cardId = cardEl ? Number(cardEl.dataset.cardId) : null;
+
+  switch (button.dataset.action) {
+    case "edit-card":
+      openEditDialog(cardId);
+      break;
+    case "delete-card":
+      handleDeleteCard(cardId);
+      break;
+    case "delete-list":
+      handleDeleteList(listId);
+      break;
+  }
+});
+
+// Tombol submit dinonaktifkan selama request agar klik ganda tidak
+// membuat data ganda.
+async function whileDisabled(form, action) {
+  const button = form.querySelector('button[type="submit"]');
+  button.disabled = true;
+  try {
+    return await action();
+  } finally {
+    button.disabled = false;
+  }
+}
+
+boardEl.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const form = event.target;
+  const title = form.elements.title.value.trim();
+  if (!isValidTitle(title)) return;
+
+  const listId = Number(form.closest(".list").dataset.listId);
+  whileDisabled(form, () => handleCreateCard(listId, title));
+});
+
+addListForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const title = addListForm.elements.title.value.trim();
+  if (!isValidTitle(title)) return;
+
+  await whileDisabled(addListForm, () => handleCreateList(title));
+  addListForm.reset();
+});
+
+editForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const cardId = Number(editDialog.dataset.cardId);
+  const title = editForm.elements.title.value.trim();
+  const description = editForm.elements.description.value.trim();
+  if (!isValidTitle(title)) return;
+
+  const changes = { title, description };
+  await whileDisabled(editForm, () => handleUpdateCard(cardId, changes));
+  editDialog.close();
+});
+
+const cancelButton = editForm.querySelector('[data-action="cancel-edit"]');
+cancelButton.addEventListener("click", () => editDialog.close());
 
 // ===== 8. Inisialisasi =====
 async function init() {
