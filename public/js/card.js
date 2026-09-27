@@ -5,6 +5,7 @@ import {
   findCard,
   getCardsByList,
   getNextPosition,
+  getInsertPosition,
 } from "./state.js";
 import { render, reportError, openEditDialog } from "./render.js";
 
@@ -54,15 +55,32 @@ export async function removeCard(cardId) {
   }
 }
 
-// Optimistic update: UI berubah dulu, server menyusul,
-// rollback bila gagal.
-export async function moveCard({ cardId, targetListId }) {
-  const card = findCard(cardId);
-  if (!card || card.listId === targetListId) return;
+// Final challenge: pindahkan card ke list tujuan, SEBELUM beforeCardId
+// (null = di akhir list). Optimistic update + rollback, satu PATCH.
+function isSamePlace(card, targetListId, beforeCardId) {
+  if (beforeCardId === card.id) return true;
+  if (card.listId !== targetListId) return false;
+  const current = getCardsByList(card.listId);
+  const index = current.findIndex((item) => item.id === card.id);
+  const nextId = current[index + 1]?.id ?? null;
+  return nextId === beforeCardId;
+}
 
+// Tiga argumen dibungkus satu object agar pemanggilan mudah dibaca.
+export async function moveCard({
+  cardId,
+  targetListId,
+  beforeCardId = null,
+}) {
+  const card = findCard(cardId);
+  if (!card || isSamePlace(card, targetListId, beforeCardId)) return;
+
+  const siblings = getCardsByList(targetListId).filter(
+    (item) => item.id !== cardId,
+  );
   const changes = {
     listId: targetListId,
-    position: getNextPosition(getCardsByList(targetListId)),
+    position: getInsertPosition(siblings, beforeCardId),
   };
 
   state.cards = state.cards.map((item) =>
@@ -73,8 +91,7 @@ export async function moveCard({ cardId, targetListId }) {
   try {
     await updateCard(cardId, changes);
   } catch (error) {
-    // rollback HANYA card ini, agar pemindahan lain tidak ikut hilang.
-    // `card` masih object lama karena state tidak pernah dimutasi.
+    // rollback HANYA card ini; `card` masih object lama (tanpa mutasi).
     state.cards = state.cards.map((item) =>
       item.id === cardId ? card : item,
     );

@@ -91,11 +91,36 @@ function setupForms() {
     .addEventListener("click", () => elements.editDialog.close());
 }
 
+const DRAG_CLASSES = [
+  "is-dragging",
+  "is-over",
+  "drop-before",
+  "drop-after",
+];
+
 function clearDragClasses() {
-  const marked = elements.board.querySelectorAll(".is-dragging, .is-over");
-  marked.forEach((element) => {
-    element.classList.remove("is-dragging", "is-over");
+  const selector = DRAG_CLASSES.map((name) => `.${name}`).join(", ");
+  elements.board.querySelectorAll(selector).forEach((element) => {
+    element.classList.remove(...DRAG_CLASSES);
   });
+}
+
+// Final challenge: apakah kursor di separuh bawah sebuah card?
+function isBelowMiddle(cardEl, clientY) {
+  const rect = cardEl.getBoundingClientRect();
+  return clientY > rect.top + rect.height / 2;
+}
+
+// Card mana yang akan berada SESUDAH card yang dijatuhkan (null = akhir).
+function getBeforeCardId(event) {
+  const cardEl = event.target.closest(".card");
+  if (!cardEl) return null;
+  const target = isBelowMiddle(cardEl, event.clientY)
+    ? cardEl.nextElementSibling
+    : cardEl;
+  return target?.classList.contains("card")
+    ? Number(target.dataset.cardId)
+    : null;
 }
 
 function setupDragAndDrop() {
@@ -118,6 +143,18 @@ function setupDragAndDrop() {
     elements.board.querySelectorAll(".list").forEach((element) => {
       element.classList.toggle("is-over", element === listEl);
     });
+
+    // penanda posisi: hanya ubah class, JANGAN render() di dragover
+    elements.board
+      .querySelectorAll(".drop-before, .drop-after")
+      .forEach((element) => {
+        element.classList.remove("drop-before", "drop-after");
+      });
+    const cardEl = event.target.closest(".card");
+    if (cardEl && Number(cardEl.dataset.cardId) !== draggedCardId) {
+      const below = isBelowMiddle(cardEl, event.clientY);
+      cardEl.classList.add(below ? "drop-after" : "drop-before");
+    }
   });
 
   elements.board.addEventListener("drop", (event) => {
@@ -128,7 +165,11 @@ function setupDragAndDrop() {
     // render ulang bisa membuat dragend tidak sampai ke board
     draggedCardId = null;
     clearDragClasses();
-    moveCard({ cardId, targetListId: Number(listEl.dataset.listId) });
+    moveCard({
+      cardId,
+      targetListId: Number(listEl.dataset.listId),
+      beforeCardId: getBeforeCardId(event),
+    });
   });
 
   elements.board.addEventListener("dragend", () => {
