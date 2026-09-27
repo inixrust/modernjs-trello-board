@@ -70,28 +70,30 @@ const state = {
   cards: [],
 };
 
-// TODO: fungsi pembanding berdasarkan position (untuk toSorted)
-const byPosition = (first, second) => 0;
+const byPosition = (first, second) => first.position - second.position;
 
-// TODO: list terurut berdasarkan position (tanpa memutasi state!)
 function getSortedLists() {
-  return [];
+  return state.lists.toSorted(byPosition);
 }
 
-// TODO: card milik listId, terurut berdasarkan position
 function getCardsByList(listId) {
-  return [];
+  return state.cards
+    .filter((card) => card.listId === listId)
+    .toSorted(byPosition);
 }
 
-// TODO: posisi terbesar di items + 1000 (pakai reduce)
 function getNextPosition(items) {
-  return 1000;
+  const maxPosition = items.reduce(
+    (max, item) => Math.max(max, item.position),
+    0,
+  );
+  return maxPosition + 1000;
 }
 
-// TODO: judul tidak kosong dan paling banyak TITLE_MAX_LENGTH karakter.
-// Validasi di browser hanya untuk kenyamanan; server tetap wajib memvalidasi.
+// Validasi di browser hanya untuk kenyamanan pengguna.
+// Server sungguhan tetap wajib memvalidasi ulang.
 function isValidTitle(title) {
-  return true;
+  return title !== "" && title.length <= TITLE_MAX_LENGTH;
 }
 
 // ===== 3. Referensi elemen DOM =====
@@ -103,27 +105,109 @@ const editDialog = document.querySelector("#edit-dialog");
 const editForm = document.querySelector("#edit-form");
 
 // ===== 4. Render =====
-// TODO: <li class="card" draggable data-card-id> dengan .card-title, .card-desc,
-// tombol data-action="edit-card" dan "delete-card". Data lewat textContent.
-function createCardElement(card) {}
+function createCardElement(card) {
+  const li = document.createElement("li");
+  li.className = "card";
+  li.draggable = true;
+  li.dataset.cardId = card.id;
+  li.innerHTML = `
+    <p class="card-title"></p>
+    <p class="card-desc"></p>
+    <div class="card-actions">
+      <button type="button" data-action="edit-card">Edit</button>
+      <button type="button" data-action="delete-card">Hapus</button>
+    </div>`;
+  li.querySelector(".card-title").textContent = card.title;
 
-// TODO: <section class="list" data-list-id> dengan header, <ul class="card-list">,
-// empty state, dan <form class="add-card-form">.
-function createListElement(list, cards) {}
+  const descEl = li.querySelector(".card-desc");
+  descEl.textContent = card.description ?? "";
+  if (!card.description) descEl.remove();
+  return li;
+}
 
-// TODO: judul board + semua list dari state, atau empty board.
-function renderBoard() {}
+function createListElement(list, cards) {
+  const section = document.createElement("section");
+  section.className = "list";
+  section.dataset.listId = list.id;
+  section.innerHTML = `
+    <header class="list-header">
+      <h2 class="list-title"></h2>
+      <span class="list-count"></span>
+      <button type="button" class="icon-button" data-action="delete-list"
+        aria-label="Hapus list">&times;</button>
+    </header>
+    <ul class="card-list"></ul>
+    <form class="add-card-form">
+      <input name="title" placeholder="Judul card baru"
+        aria-label="Judul card baru" required>
+      <button type="submit">+ Card</button>
+    </form>`;
+  section.querySelector(".list-title").textContent = list.title;
+  section.querySelector(".list-count").textContent = cards.length;
+  section.querySelector("input").maxLength = TITLE_MAX_LENGTH;
 
-// TODO: tampilkan pesan di #status (sembunyikan bila message === "").
-function showStatus(message, type = "info") {}
+  const cardListEl = section.querySelector(".card-list");
+  if (cards.length === 0) {
+    cardListEl.innerHTML = `<li class="empty">Belum ada card</li>`;
+    return section;
+  }
+  cardListEl.append(...cards.map(createCardElement));
+  return section;
+}
 
-// TODO: console.error(error) untuk developer, showStatus(pesan umum) untuk
-// pengguna. Jangan tampilkan URL/status ke pengguna (OWASP).
-function reportError(userMessage, error) {}
+function renderBoard() {
+  boardTitleEl.textContent = state.board
+    ? state.board.title
+    : "Board tidak ditemukan";
+
+  const lists = getSortedLists();
+  if (lists.length === 0) {
+    boardEl.innerHTML = `
+      <p class="empty-board">Belum ada list. Buat list pertama.</p>`;
+    return;
+  }
+
+  const listElements = lists.map((list) =>
+    createListElement(list, getCardsByList(list.id)),
+  );
+  boardEl.replaceChildren(...listElements);
+}
+
+function showStatus(message, type = "info") {
+  statusEl.textContent = message;
+  statusEl.dataset.type = type;
+  statusEl.hidden = message === "";
+}
+
+// Pesan umum untuk pengguna; detail teknis hanya ke console.
+function reportError(userMessage, error) {
+  console.error(error);
+  showStatus(userMessage, "error");
+}
 
 // ===== 8. Inisialisasi =====
-// TODO: loading -> getBoards -> Promise.all(getLists, getCards) -> state
-// -> renderBoard(); tampilkan error bila gagal.
-async function init() {}
+async function init() {
+  showStatus("Memuat board...", "loading");
+  try {
+    const boards = await getBoards();
+    state.board = boards[0] ?? null;
+
+    if (state.board) {
+      const [lists, cards] = await Promise.all([
+        getLists(state.board.id),
+        getCards(),
+      ]);
+      const listIds = lists.map((list) => list.id);
+      state.lists = lists;
+      state.cards = cards.filter((card) => listIds.includes(card.listId));
+    }
+
+    renderBoard();
+    showStatus("");
+  } catch (error) {
+    const message = "Gagal memuat board. Muat ulang halaman.";
+    reportError(message, error);
+  }
+}
 
 init();
