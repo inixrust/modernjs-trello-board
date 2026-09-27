@@ -1,22 +1,23 @@
-# Fitur 08: Deep Dive: Event Loop dan Promise Sederhana
+# Fitur 09: Final Challenge: Mengurutkan Card
 
-Materi: Modul Peserta Bab 15 (Hari 4).
+Materi: Modul Peserta Bab 16 (Hari 4).
 
-Prediksi dulu output `latihan/event-loop.js` dan `latihan/event-loop-2.js`, lalu jalankan dengan Node. Setelah itu lengkapi `latihan/my-promise.js` tahap 2--4.
+Card yang dijatuhkan harus bisa disisipkan **di antara** dua card, di list yang sama maupun list lain, dan urutannya tersimpan. Tidak ada kode awal: rancang sendiri. Jawab dulu pertanyaan rancangan di Bab 16 sebagai komentar di atas `card.js`. Class CSS `drop-before` dan `drop-after` sudah tersedia.
 
 ## Kriteria selesai
 
-- [ ] State hanya berubah sekali
-- [ ] `then` menyimpan callback saat pending dan menjalankannya saat selesai
-- [ ] Callback selalu asynchronous (`queueMicrotask`)
-- [ ] Uji tahap 3 dan 4 mencetak baris 1 sampai 5 berurutan
+- [ ] Drop di atas card -> ditempatkan sebelum card itu; di area kosong -> di akhir
+- [ ] Mengurutkan ulang di list yang sama berfungsi
+- [ ] Hanya satu PATCH per pemindahan; drop di posisi semula tanpa request
+- [ ] Ada penanda visual posisi jatuh; urutan tetap setelah muat ulang
+- [ ] Rollback bila PATCH gagal; tidak ada `fetch` di luar `api.js`
 
 ## Cara mengecek
 
-`node latihan/event-loop.js`, `node latihan/event-loop-2.js`, `node latihan/my-promise.js`
+Jalankan `npm start`, lalu buka <http://localhost:3000>.
 
 Bandingkan dengan solusi setelah mencoba sendiri:
 
 ```bash
-git diff 08-promise-starter 08-promise-solution
+git diff 09-final-challenge-starter 09-final-challenge-solution
 ```
