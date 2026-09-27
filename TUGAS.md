@@ -1,23 +1,22 @@
-# Fitur 04: CRUD dengan Event Delegation
+# Fitur 05: Drag and Drop Native
 
-Materi: Modul Peserta Bab 11 (Hari 3).
+Materi: Modul Peserta Bab 12 (Hari 3).
 
-Lengkapi handler (bagian 5) dan listener (bagian 6).
+Lengkapi `handleMoveCard` dan empat listener drag (bagian 7).
 
 ## Kriteria selesai
 
-- [ ] Tambah, edit (dialog), dan hapus card tersimpan ke API
-- [ ] Tambah dan hapus list. Hapus list juga membersihkan card di state
-- [ ] Satu listener `click` dan satu `submit` di `#board`
-- [ ] State diperbarui tanpa mutasi (spread, `map`, `filter`)
-- [ ] Judul divalidasi (`isValidTitle`) dan tombol submit nonaktif selama request
+- [ ] Card dapat dipindah antar-list dan ditaruh di akhir list tujuan
+- [ ] `dragover` memanggil `preventDefault()` dan menyorot list tujuan
+- [ ] Satu `PATCH /cards/:id` per pemindahan
+- [ ] Sorotan hilang setelah drop atau batal
 
 ## Cara mengecek
 
-Jalankan `npm start`, lalu buka <http://localhost:3000>. Muat ulang halaman: semua perubahan harus tetap ada.
+Jalankan `npm start`, lalu buka <http://localhost:3000>. Buka tab Network saat menyeret card.
 
 Bandingkan dengan solusi setelah mencoba sendiri:
 
 ```bash
-git diff 04-crud-starter 04-crud-solution
+git diff 05-drag-drop-starter 05-drag-drop-solution
 ```

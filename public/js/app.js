@@ -256,6 +256,10 @@ async function handleDeleteCard(cardId) {
   }
 }
 
+// TODO: pindahkan card ke AKHIR list tujuan (listId + position) lewat
+// handleUpdateCard. Abaikan bila list tujuan sama dengan list asal.
+async function handleMoveCard({ cardId, targetListId }) {}
+
 function openEditDialog(cardId) {
   const card = state.cards.find((item) => item.id === cardId);
   if (!card) return;
@@ -333,6 +337,14 @@ editForm.addEventListener("submit", async (event) => {
 
 const cancelButton = editForm.querySelector('[data-action="cancel-edit"]');
 cancelButton.addEventListener("click", () => editDialog.close());
+
+// ===== 7. Drag & drop =====
+let draggedCardId = null;
+
+// TODO 1: dragstart -> simpan cardId (variabel + dataTransfer), class is-dragging
+// TODO 2: dragover -> event.preventDefault() pada .list, sorot dengan is-over
+// TODO 3: drop -> baca cardId, list tujuan -> handleMoveCard({ cardId, targetListId })
+// TODO 4: dragend -> bersihkan is-dragging dan is-over
 
 // ===== 8. Inisialisasi =====
 async function init() {
