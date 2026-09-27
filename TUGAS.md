@@ -1,21 +1,22 @@
-# Fitur 06: Status Aplikasi dan Optimistic Update
+# Fitur 07: Refactor ke ES Modules
 
-Materi: Modul Peserta Bab 13 (Hari 4).
+Materi: Modul Peserta Bab 14 (Hari 4).
 
-Kode sudah disusun ulang: status ada di state, `render()`, `showToast()`, dan `loadBoard()` dengan tombol Coba lagi. Tugas Anda: ubah `moveCard` menjadi optimistic update dengan rollback.
+Pindahkan kode dari `public/js/app.js` ke delapan module sesuai komentar di setiap berkas, lalu ubah tag script menjadi `type="module"`.
 
 ## Kriteria selesai
 
-- [ ] Card langsung berpindah walaupun server lambat (`npm run start:lambat`)
-- [ ] Bila PATCH gagal, HANYA card itu yang kembali (rollback per card) dan toast tampil
-- [ ] Rollback bekerja karena state diperbarui tanpa mutasi
+- [ ] Delapan module: api, state, render, board, list, card, events, app
+- [ ] Import hanya ke lapisan yang lebih rendah (tanpa circular dependency)
+- [ ] Tidak ada `fetch` di luar `api.js`
+- [ ] Perilaku aplikasi sama persis seperti sebelum refactor
 
 ## Cara mengecek
 
-Jalankan `npm start`, lalu buka <http://localhost:3000>. Uji gagal: DevTools > Network > klik kanan request PATCH > Block request URL.
+Jalankan `npm start`, lalu buka <http://localhost:3000>. Periksa tab Sources: delapan module terpisah.
 
 Bandingkan dengan solusi setelah mencoba sendiri:
 
 ```bash
-git diff 06-optimistic-starter 06-optimistic-solution
+git diff 07-modules-starter 07-modules-solution
 ```
