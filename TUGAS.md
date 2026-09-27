@@ -1,22 +1,21 @@
-# Fitur 05: Drag and Drop Native
+# Fitur 06: Status Aplikasi dan Optimistic Update
 
-Materi: Modul Peserta Bab 12 (Hari 3).
+Materi: Modul Peserta Bab 13 (Hari 4).
 
-Lengkapi `handleMoveCard` dan empat listener drag (bagian 7).
+Kode sudah disusun ulang: status ada di state, `render()`, `showToast()`, dan `loadBoard()` dengan tombol Coba lagi. Tugas Anda: ubah `moveCard` menjadi optimistic update dengan rollback.
 
 ## Kriteria selesai
 
-- [ ] Card dapat dipindah antar-list dan ditaruh di akhir list tujuan
-- [ ] `dragover` memanggil `preventDefault()` dan menyorot list tujuan
-- [ ] Satu `PATCH /cards/:id` per pemindahan
-- [ ] Sorotan hilang setelah drop atau batal
+- [ ] Card langsung berpindah walaupun server lambat (`npm run start:lambat`)
+- [ ] Bila PATCH gagal, HANYA card itu yang kembali (rollback per card) dan toast tampil
+- [ ] Rollback bekerja karena state diperbarui tanpa mutasi
 
 ## Cara mengecek
 
-Jalankan `npm start`, lalu buka <http://localhost:3000>. Buka tab Network saat menyeret card.
+Jalankan `npm start`, lalu buka <http://localhost:3000>. Uji gagal: DevTools > Network > klik kanan request PATCH > Block request URL.
 
 Bandingkan dengan solusi setelah mencoba sendiri:
 
 ```bash
-git diff 05-drag-drop-starter 05-drag-drop-solution
+git diff 06-optimistic-starter 06-optimistic-solution
 ```

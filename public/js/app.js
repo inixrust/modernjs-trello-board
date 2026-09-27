@@ -1,6 +1,8 @@
-// Trello Board - kondisi akhir Hari 3 (satu berkas, pessimistic update)
+// Trello Board - Pelatihan Modern JavaScript INIXINDO - satu berkas, versi Hari 4 sesi 1
+// (disusun agar mudah dipecah menjadi ES Modules di fitur 07)
 
-// ===== 1. API (Hari 2) =====
+// ===== 1. api =====
+// satu-satunya module yang berbicara dengan server.
 // URL relatif: string kosong berarti request ke origin halaman ini,
 // mis. "/cards" -> http://localhost:3000/cards.
 const API_URL = "";
@@ -61,16 +63,28 @@ async function deleteCard(id) {
   return request(`/cards/${id}`, { method: "DELETE" });
 }
 
-// ===== 2. State dan selector =====
+// ===== 2. state =====
+// sumber kebenaran data di browser + fungsi baca (selector).
+// Module ini tidak menyentuh DOM dan tidak memanggil API.
 const TITLE_MAX_LENGTH = 80;
 
 const state = {
   board: null,
   lists: [],
   cards: [],
+  status: "idle", // "idle" | "loading" | "ready" | "error"
+  message: "",
 };
 
 const byPosition = (first, second) => first.position - second.position;
+
+function findCard(cardId) {
+  return state.cards.find((card) => card.id === cardId);
+}
+
+function findList(listId) {
+  return state.lists.find((list) => list.id === listId);
+}
 
 function getSortedLists() {
   return state.lists.toSorted(byPosition);
@@ -91,20 +105,24 @@ function getNextPosition(items) {
 }
 
 // Validasi di browser hanya untuk kenyamanan pengguna.
-// Server sungguhan tetap wajib memvalidasi ulang.
+// Server sungguhan WAJIB memvalidasi ulang (OWASP: jangan percaya klien).
 function isValidTitle(title) {
   return title !== "" && title.length <= TITLE_MAX_LENGTH;
 }
 
-// ===== 3. Referensi elemen DOM =====
-const boardTitleEl = document.querySelector("#board-title");
-const statusEl = document.querySelector("#status");
-const boardEl = document.querySelector("#board");
-const addListForm = document.querySelector("#add-list-form");
-const editDialog = document.querySelector("#edit-dialog");
-const editForm = document.querySelector("#edit-form");
+// ===== 3. render =====
+// mengubah state menjadi DOM. Tidak memanggil API.
 
-// ===== 4. Render =====
+const elements = {
+  boardTitle: document.querySelector("#board-title"),
+  status: document.querySelector("#status"),
+  toast: document.querySelector("#toast"),
+  board: document.querySelector("#board"),
+  addListForm: document.querySelector("#add-list-form"),
+  editDialog: document.querySelector("#edit-dialog"),
+  editForm: document.querySelector("#edit-form"),
+};
+
 function createCardElement(card) {
   const li = document.createElement("li");
   li.className = "card";
@@ -155,238 +173,80 @@ function createListElement(list, cards) {
   return section;
 }
 
+function renderStatus() {
+  const { status, message } = state;
+  elements.status.hidden = status === "ready";
+  elements.status.dataset.type = status;
+  elements.status.textContent =
+    status === "loading" ? "Memuat board..." : message;
+
+  if (status === "error") {
+    const retryButton = document.createElement("button");
+    retryButton.type = "button";
+    retryButton.dataset.action = "retry";
+    retryButton.textContent = "Coba lagi";
+    elements.status.append(retryButton);
+  }
+}
+
 function renderBoard() {
-  boardTitleEl.textContent = state.board
+  if (state.status !== "ready") {
+    elements.board.replaceChildren();
+    return;
+  }
+  elements.boardTitle.textContent = state.board
     ? state.board.title
     : "Board tidak ditemukan";
 
   const lists = getSortedLists();
   if (lists.length === 0) {
-    boardEl.innerHTML = `
+    elements.board.innerHTML = `
       <p class="empty-board">Belum ada list. Buat list pertama.</p>`;
     return;
   }
-
   const listElements = lists.map((list) =>
     createListElement(list, getCardsByList(list.id)),
   );
-  boardEl.replaceChildren(...listElements);
+  elements.board.replaceChildren(...listElements);
 }
 
-function showStatus(message, type = "info") {
-  statusEl.textContent = message;
-  statusEl.dataset.type = type;
-  statusEl.hidden = message === "";
+function render() {
+  renderStatus();
+  renderBoard();
 }
 
-// Pesan umum untuk pengguna; detail teknis hanya ke console.
+let toastTimer = null;
+
+function showToast(message) {
+  elements.toast.textContent = message;
+  elements.toast.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    elements.toast.hidden = true;
+  }, 4000);
+}
+
+// Pesan untuk pengguna dibuat umum; detail teknis hanya ke console
+// (OWASP: jangan tampilkan detail sistem kepada pengguna).
 function reportError(userMessage, error) {
   console.error(error);
-  showStatus(userMessage, "error");
+  showToast(userMessage);
 }
 
-// ===== 5. Handler (aksi pengguna) =====
-async function handleCreateList(title) {
-  try {
-    const newList = await createList({
-      boardId: state.board.id,
-      title,
-      position: getNextPosition(state.lists),
-    });
-    state.lists = [...state.lists, newList];
-    renderBoard();
-  } catch (error) {
-    reportError("Gagal menambah list. Coba lagi.", error);
-  }
+function openEditDialog(card) {
+  elements.editDialog.dataset.cardId = card.id;
+  elements.editForm.elements.title.value = card.title;
+  elements.editForm.elements.description.value = card.description ?? "";
+  elements.editDialog.showModal();
 }
 
-async function handleDeleteList(listId) {
-  const list = state.lists.find((item) => item.id === listId);
-  if (!list) return;
+// ===== 4. board =====
+// memuat board beserta list dan card-nya.
 
-  const cardCount = getCardsByList(listId).length;
-  const question = `Hapus list "${list.title}" beserta ${cardCount} card?`;
-  if (!confirm(question)) return;
+async function loadBoard() {
+  state.status = "loading";
+  render();
 
-  try {
-    await deleteList(listId);
-    state.lists = state.lists.filter((item) => item.id !== listId);
-    state.cards = state.cards.filter((card) => card.listId !== listId);
-    renderBoard();
-  } catch (error) {
-    reportError("Gagal menghapus list. Coba lagi.", error);
-  }
-}
-
-async function handleCreateCard(listId, title) {
-  try {
-    const newCard = await createCard({
-      listId,
-      title,
-      description: "",
-      position: getNextPosition(getCardsByList(listId)),
-      createdAt: new Date().toISOString(),
-    });
-    state.cards = [...state.cards, newCard];
-    renderBoard();
-  } catch (error) {
-    reportError("Gagal menambah card. Coba lagi.", error);
-  }
-}
-
-async function handleUpdateCard(cardId, changes) {
-  try {
-    const updatedCard = await updateCard(cardId, changes);
-    state.cards = state.cards.map((card) =>
-      card.id === cardId ? updatedCard : card,
-    );
-    renderBoard();
-  } catch (error) {
-    reportError("Gagal menyimpan card. Coba lagi.", error);
-  }
-}
-
-async function handleDeleteCard(cardId) {
-  try {
-    await deleteCard(cardId);
-    state.cards = state.cards.filter((card) => card.id !== cardId);
-    renderBoard();
-  } catch (error) {
-    reportError("Gagal menghapus card. Coba lagi.", error);
-  }
-}
-
-async function handleMoveCard({ cardId, targetListId }) {
-  const card = state.cards.find((item) => item.id === cardId);
-  if (!card || card.listId === targetListId) return;
-
-  const position = getNextPosition(getCardsByList(targetListId));
-  await handleUpdateCard(cardId, { listId: targetListId, position });
-}
-
-function openEditDialog(cardId) {
-  const card = state.cards.find((item) => item.id === cardId);
-  if (!card) return;
-
-  editDialog.dataset.cardId = cardId;
-  editForm.elements.title.value = card.title;
-  editForm.elements.description.value = card.description ?? "";
-  editDialog.showModal();
-}
-
-// ===== 6. Event listener (event delegation) =====
-boardEl.addEventListener("click", (event) => {
-  const button = event.target.closest("button[data-action]");
-  if (!button) return;
-
-  const listId = Number(button.closest(".list").dataset.listId);
-  const cardEl = button.closest(".card");
-  const cardId = cardEl ? Number(cardEl.dataset.cardId) : null;
-
-  switch (button.dataset.action) {
-    case "edit-card":
-      openEditDialog(cardId);
-      break;
-    case "delete-card":
-      handleDeleteCard(cardId);
-      break;
-    case "delete-list":
-      handleDeleteList(listId);
-      break;
-  }
-});
-
-// Tombol submit dinonaktifkan selama request agar klik ganda tidak
-// membuat data ganda.
-async function whileDisabled(form, action) {
-  const button = form.querySelector('button[type="submit"]');
-  button.disabled = true;
-  try {
-    return await action();
-  } finally {
-    button.disabled = false;
-  }
-}
-
-boardEl.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const form = event.target;
-  const title = form.elements.title.value.trim();
-  if (!isValidTitle(title)) return;
-
-  const listId = Number(form.closest(".list").dataset.listId);
-  whileDisabled(form, () => handleCreateCard(listId, title));
-});
-
-addListForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const title = addListForm.elements.title.value.trim();
-  if (!isValidTitle(title)) return;
-
-  await whileDisabled(addListForm, () => handleCreateList(title));
-  addListForm.reset();
-});
-
-editForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const cardId = Number(editDialog.dataset.cardId);
-  const title = editForm.elements.title.value.trim();
-  const description = editForm.elements.description.value.trim();
-  if (!isValidTitle(title)) return;
-
-  const changes = { title, description };
-  await whileDisabled(editForm, () => handleUpdateCard(cardId, changes));
-  editDialog.close();
-});
-
-const cancelButton = editForm.querySelector('[data-action="cancel-edit"]');
-cancelButton.addEventListener("click", () => editDialog.close());
-
-// ===== 7. Drag & drop =====
-let draggedCardId = null;
-
-boardEl.addEventListener("dragstart", (event) => {
-  const cardEl = event.target.closest(".card");
-  if (!cardEl) return;
-
-  draggedCardId = Number(cardEl.dataset.cardId);
-  event.dataTransfer.setData("text/plain", cardEl.dataset.cardId);
-  event.dataTransfer.effectAllowed = "move";
-  cardEl.classList.add("is-dragging");
-});
-
-boardEl.addEventListener("dragover", (event) => {
-  const listEl = event.target.closest(".list");
-  if (!listEl || draggedCardId === null) return;
-
-  event.preventDefault(); // tanpa ini, event drop tidak akan terjadi
-  event.dataTransfer.dropEffect = "move";
-  boardEl.querySelectorAll(".list").forEach((element) => {
-    element.classList.toggle("is-over", element === listEl);
-  });
-});
-
-boardEl.addEventListener("drop", (event) => {
-  const listEl = event.target.closest(".list");
-  if (!listEl) return;
-
-  event.preventDefault();
-  const cardId = Number(event.dataTransfer.getData("text/plain"));
-  const targetListId = Number(listEl.dataset.listId);
-  handleMoveCard({ cardId, targetListId });
-});
-
-boardEl.addEventListener("dragend", () => {
-  draggedCardId = null;
-  const marked = boardEl.querySelectorAll(".is-dragging, .is-over");
-  marked.forEach((element) => {
-    element.classList.remove("is-dragging", "is-over");
-  });
-});
-
-// ===== 8. Inisialisasi =====
-async function init() {
-  showStatus("Memuat board...", "loading");
   try {
     const boards = await getBoards();
     state.board = boards[0] ?? null;
@@ -401,12 +261,250 @@ async function init() {
       state.cards = cards.filter((card) => listIds.includes(card.listId));
     }
 
-    renderBoard();
-    showStatus("");
+    state.status = "ready";
+    state.message = "";
   } catch (error) {
-    const message = "Gagal memuat board. Muat ulang halaman.";
-    reportError(message, error);
+    console.error(error);
+    state.status = "error";
+    state.message = "Gagal memuat board. Periksa koneksi, lalu coba lagi.";
+  } finally {
+    render();
   }
 }
 
-init();
+// ===== 5. list =====
+// aksi untuk list: tambah dan hapus.
+
+async function addList(title) {
+  try {
+    const newList = await createList({
+      boardId: state.board.id,
+      title,
+      position: getNextPosition(state.lists),
+    });
+    state.lists = [...state.lists, newList];
+    render();
+  } catch (error) {
+    reportError("Gagal menambah list. Coba lagi.", error);
+  }
+}
+
+async function removeList(listId) {
+  const list = findList(listId);
+  if (!list) return;
+
+  const cardCount = getCardsByList(listId).length;
+  const question = `Hapus list "${list.title}" beserta ${cardCount} card?`;
+  if (!confirm(question)) return;
+
+  try {
+    // JSON Server 0.17 ikut menghapus card yang listId-nya = listId ini
+    await deleteList(listId);
+    state.lists = state.lists.filter((item) => item.id !== listId);
+    state.cards = state.cards.filter((card) => card.listId !== listId);
+    render();
+  } catch (error) {
+    reportError("Gagal menghapus list. Coba lagi.", error);
+  }
+}
+
+// ===== 6. card =====
+// aksi untuk card: tambah, edit, hapus, pindah.
+
+async function addCard(listId, title) {
+  try {
+    const newCard = await createCard({
+      listId,
+      title,
+      description: "",
+      position: getNextPosition(getCardsByList(listId)),
+      createdAt: new Date().toISOString(),
+    });
+    state.cards = [...state.cards, newCard];
+    render();
+  } catch (error) {
+    reportError("Gagal menambah card. Coba lagi.", error);
+  }
+}
+
+function startEditCard(cardId) {
+  const card = findCard(cardId);
+  if (!card) return;
+  openEditDialog(card);
+}
+
+async function editCard(cardId, changes) {
+  try {
+    const updatedCard = await updateCard(cardId, changes);
+    state.cards = state.cards.map((card) =>
+      card.id === cardId ? updatedCard : card,
+    );
+    render();
+    return true;
+  } catch (error) {
+    reportError("Gagal menyimpan card. Coba lagi.", error);
+    return false;
+  }
+}
+
+async function removeCard(cardId) {
+  try {
+    await deleteCard(cardId);
+    state.cards = state.cards.filter((card) => card.id !== cardId);
+    render();
+  } catch (error) {
+    reportError("Gagal menghapus card. Coba lagi.", error);
+  }
+}
+
+// TODO (Hari 4): ubah menjadi optimistic update dengan rollback:
+// simpan state.cards lama -> ubah state -> render() -> await updateCard
+// -> bila gagal: kembalikan state, render(), showToast(...).
+async function moveCard({ cardId, targetListId }) {
+  const card = findCard(cardId);
+  if (!card || card.listId === targetListId) return;
+
+  const position = getNextPosition(getCardsByList(targetListId));
+  await editCard(cardId, { listId: targetListId, position });
+}
+
+// ===== 7. events =====
+// menghubungkan event DOM dengan aksi.
+// Tidak memanggil API secara langsung.
+
+function getIds(element) {
+  const listEl = element.closest(".list");
+  const cardEl = element.closest(".card");
+  return {
+    listId: listEl ? Number(listEl.dataset.listId) : null,
+    cardId: cardEl ? Number(cardEl.dataset.cardId) : null,
+  };
+}
+
+// Tombol submit dinonaktifkan selama request berjalan agar klik ganda
+// tidak membuat data ganda.
+async function whileDisabled(form, action) {
+  const button = form.querySelector('button[type="submit"]');
+  button.disabled = true;
+  try {
+    return await action();
+  } finally {
+    button.disabled = false;
+  }
+}
+
+function setupClickAndSubmit() {
+  elements.board.addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-action]");
+    if (!button) return;
+
+    const { listId, cardId } = getIds(button);
+    const actions = {
+      "edit-card": () => startEditCard(cardId),
+      "delete-card": () => removeCard(cardId),
+      "delete-list": () => removeList(listId),
+    };
+    actions[button.dataset.action]?.();
+  });
+
+  elements.board.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const title = event.target.elements.title.value.trim();
+    if (!isValidTitle(title)) return;
+
+    const { listId } = getIds(event.target);
+    whileDisabled(event.target, () => addCard(listId, title));
+  });
+
+  elements.status.addEventListener("click", (event) => {
+    if (event.target.dataset.action === "retry") loadBoard();
+  });
+}
+
+function setupForms() {
+  elements.addListForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const title = elements.addListForm.elements.title.value.trim();
+    if (!isValidTitle(title)) return;
+
+    await whileDisabled(event.target, () => addList(title));
+    elements.addListForm.reset();
+  });
+
+  elements.editForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const fields = elements.editForm.elements;
+    const cardId = Number(elements.editDialog.dataset.cardId);
+    const title = fields.title.value.trim();
+    const description = fields.description.value.trim();
+    if (!isValidTitle(title)) return;
+
+    const changes = { title, description };
+    const saved = await whileDisabled(event.target, () =>
+      editCard(cardId, changes),
+    );
+    if (saved) elements.editDialog.close();
+  });
+
+  elements.editForm
+    .querySelector('[data-action="cancel-edit"]')
+    .addEventListener("click", () => elements.editDialog.close());
+}
+
+function clearDragClasses() {
+  const marked = elements.board.querySelectorAll(".is-dragging, .is-over");
+  marked.forEach((element) => {
+    element.classList.remove("is-dragging", "is-over");
+  });
+}
+
+function setupDragAndDrop() {
+  let draggedCardId = null;
+
+  elements.board.addEventListener("dragstart", (event) => {
+    const cardEl = event.target.closest(".card");
+    if (!cardEl) return;
+    draggedCardId = Number(cardEl.dataset.cardId);
+    event.dataTransfer.setData("text/plain", cardEl.dataset.cardId);
+    event.dataTransfer.effectAllowed = "move";
+    cardEl.classList.add("is-dragging");
+  });
+
+  elements.board.addEventListener("dragover", (event) => {
+    const listEl = event.target.closest(".list");
+    if (!listEl || draggedCardId === null) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    elements.board.querySelectorAll(".list").forEach((element) => {
+      element.classList.toggle("is-over", element === listEl);
+    });
+  });
+
+  elements.board.addEventListener("drop", (event) => {
+    const listEl = event.target.closest(".list");
+    if (!listEl) return;
+    event.preventDefault();
+    const cardId = Number(event.dataTransfer.getData("text/plain"));
+    // render ulang bisa membuat dragend tidak sampai ke board
+    draggedCardId = null;
+    clearDragClasses();
+    moveCard({ cardId, targetListId: Number(listEl.dataset.listId) });
+  });
+
+  elements.board.addEventListener("dragend", () => {
+    draggedCardId = null;
+    clearDragClasses();
+  });
+}
+
+function setupEvents() {
+  setupClickAndSubmit();
+  setupForms();
+  setupDragAndDrop();
+}
+
+// ===== 8. app =====
+// titik masuk aplikasi. Hanya merangkai module lain.
+
+setupEvents();
+loadBoard();
