@@ -1,22 +1,23 @@
-# Fitur 02: Fungsi API dengan Fetch
+# Fitur 03: State dan Render Board
 
-Materi: Modul Peserta Bab 9 (Hari 2).
+Materi: Modul Peserta Bab 10 (Hari 3).
 
-Lengkapi bagian 1 di `public/js/app.js`: helper `request()` dan fungsi CRUD.
+Lengkapi selector, fungsi render, dan `init()`.
 
 ## Kriteria selesai
 
-- [ ] `request()` memeriksa `response.ok` dan melempar `Error`
-- [ ] Header `Content-Type: application/json` selalu terkirim
-- [ ] Sembilan fungsi CRUD mengembalikan data dari server
-- [ ] `await getCard(999)` (bila dibuat) masuk ke `catch` dengan status 404
+- [ ] Board, list, dan card tampil terurut berdasarkan `position`
+- [ ] Selector tidak memutasi state (`toSorted`, `filter`)
+- [ ] Judul card lewat `textContent`, template statis lewat `innerHTML`
+- [ ] Loading tampil (`npm run start:lambat`) dan error tampil saat server mati
+- [ ] Pesan error untuk pengguna umum; detail teknis hanya di Console (`reportError`)
 
 ## Cara mengecek
 
-Jalankan `npm start`, lalu buka <http://localhost:3000>. Uji di Console: `await getCards()`, `await createList({...})`, dan seterusnya.
+Jalankan `npm start`, lalu buka <http://localhost:3000>.
 
 Bandingkan dengan solusi setelah mencoba sendiri:
 
 ```bash
-git diff 02-api-starter 02-api-solution
+git diff 03-render-starter 03-render-solution
 ```
