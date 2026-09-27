@@ -1,4 +1,4 @@
-// Trello Board - Pelatihan Modern JavaScript INIXINDO
+// Trello Board - kondisi akhir Hari 3 (satu berkas, pessimistic update)
 
 // ===== 1. API (Hari 2) =====
 // URL relatif: string kosong berarti request ke origin halaman ini,
@@ -256,9 +256,13 @@ async function handleDeleteCard(cardId) {
   }
 }
 
-// TODO: pindahkan card ke AKHIR list tujuan (listId + position) lewat
-// handleUpdateCard. Abaikan bila list tujuan sama dengan list asal.
-async function handleMoveCard({ cardId, targetListId }) {}
+async function handleMoveCard({ cardId, targetListId }) {
+  const card = state.cards.find((item) => item.id === cardId);
+  if (!card || card.listId === targetListId) return;
+
+  const position = getNextPosition(getCardsByList(targetListId));
+  await handleUpdateCard(cardId, { listId: targetListId, position });
+}
 
 function openEditDialog(cardId) {
   const card = state.cards.find((item) => item.id === cardId);
@@ -341,10 +345,44 @@ cancelButton.addEventListener("click", () => editDialog.close());
 // ===== 7. Drag & drop =====
 let draggedCardId = null;
 
-// TODO 1: dragstart -> simpan cardId (variabel + dataTransfer), class is-dragging
-// TODO 2: dragover -> event.preventDefault() pada .list, sorot dengan is-over
-// TODO 3: drop -> baca cardId, list tujuan -> handleMoveCard({ cardId, targetListId })
-// TODO 4: dragend -> bersihkan is-dragging dan is-over
+boardEl.addEventListener("dragstart", (event) => {
+  const cardEl = event.target.closest(".card");
+  if (!cardEl) return;
+
+  draggedCardId = Number(cardEl.dataset.cardId);
+  event.dataTransfer.setData("text/plain", cardEl.dataset.cardId);
+  event.dataTransfer.effectAllowed = "move";
+  cardEl.classList.add("is-dragging");
+});
+
+boardEl.addEventListener("dragover", (event) => {
+  const listEl = event.target.closest(".list");
+  if (!listEl || draggedCardId === null) return;
+
+  event.preventDefault(); // tanpa ini, event drop tidak akan terjadi
+  event.dataTransfer.dropEffect = "move";
+  boardEl.querySelectorAll(".list").forEach((element) => {
+    element.classList.toggle("is-over", element === listEl);
+  });
+});
+
+boardEl.addEventListener("drop", (event) => {
+  const listEl = event.target.closest(".list");
+  if (!listEl) return;
+
+  event.preventDefault();
+  const cardId = Number(event.dataTransfer.getData("text/plain"));
+  const targetListId = Number(listEl.dataset.listId);
+  handleMoveCard({ cardId, targetListId });
+});
+
+boardEl.addEventListener("dragend", () => {
+  draggedCardId = null;
+  const marked = boardEl.querySelectorAll(".is-dragging, .is-over");
+  marked.forEach((element) => {
+    element.classList.remove("is-dragging", "is-over");
+  });
+});
 
 // ===== 8. Inisialisasi =====
 async function init() {
