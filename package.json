@@ -1,0 +1,13 @@
+{
+  "name": "trello-board",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Proyek pelatihan Modern JavaScript INIXINDO",
+  "scripts": {
+    "start": "json-server --watch db.json --port 3000",
+    "start:lambat": "json-server --watch db.json --port 3000 --delay 1500"
+  },
+  "devDependencies": {
+    "json-server": "0.17.4"
+  }
+}

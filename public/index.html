@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self'; script-src 'self'; style-src 'self';
+    img-src 'self'; font-src 'self'; connect-src 'self';
+    object-src 'none'; base-uri 'none'; form-action 'self'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trello Board - Inixindo Bandung</title>
+  <link rel="icon" href="brand/logo-mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="brand/brand.css">
+  <link rel="stylesheet" href="brand/footer.css">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/app.js" defer></script>
+</head>
+<body>
+  <header class="app-header">
+    <img class="app-header__logo" src="brand/logo-mark.svg" width="30" height="32" alt="">
+    <div>
+      <p class="app-header__eyebrow">Inixindo Bandung &middot; Pelatihan Modern JavaScript</p>
+      <h1 id="board-title">Memuat board...</h1>
+    </div>
+  </header>
+
+  <p id="status" class="status" hidden></p>
+  <p id="toast" class="toast" role="alert" hidden></p>
+
+  <div class="board-wrapper">
+    <main id="board" class="board"></main>
+
+    <form id="add-list-form" class="add-list">
+      <input name="title" placeholder="Judul list baru" aria-label="Judul list baru"
+        required maxlength="80">
+      <button type="submit">+ Tambah List</button>
+    </form>
+  </div>
+
+  <dialog id="edit-dialog">
+    <form id="edit-form" class="edit-form">
+      <h2>Edit Card</h2>
+      <label>Judul
+        <input name="title" required maxlength="80">
+      </label>
+      <label>Deskripsi
+        <textarea name="description" rows="4"></textarea>
+      </label>
+      <div class="dialog-actions">
+        <button type="button" data-action="cancel-edit">Batal</button>
+        <button type="submit">Simpan</button>
+      </div>
+    </form>
+  </dialog>
+
+  <footer class="ixb-footer">
+    <span class="ixb-footer__brand">
+      <img class="ixb-footer__lockup" src="brand/footer-lockup.svg" width="217" height="34"
+        alt="Inixindo Bandung">
+    </span>
+    <p class="ixb-footer__tagline">Continuous Learning, Keep Up to Date</p>
+  </footer>
+</body>
+</html>

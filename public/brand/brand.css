@@ -1,0 +1,33 @@
+/*
+ * brand.css - token brand Inixindo Bandung untuk aplikasi pelatihan.
+ * Sumber aset: folder brand/ (logo, footer, font). Font di-host sendiri
+ * (SIL Open Font License, lihat fonts/OFL-*.txt) agar tetap jalan offline.
+ */
+@font-face {
+  font-family: "Poppins";
+  src: url("fonts/Poppins-Medium.ttf") format("truetype");
+  font-weight: 400 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Montserrat";
+  src: url("fonts/Montserrat-VF.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --color-primary: #143564;   /* navy: chevron logo */
+  --color-secondary: #005081; /* biru ribbon footer */
+  --color-accent: #ea2339;    /* merah: belah ketupat atas */
+  --color-sky: #5caad5;       /* sky: belah ketupat bawah */
+  --color-bg: #ffffff;
+  --color-border: #e2e8f0;
+  --color-text: #172b4d;
+  --color-text-muted: #6b7280;
+  --font-sans: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-heading: "Montserrat", var(--font-sans);
+}

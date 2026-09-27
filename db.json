@@ -1,0 +1,20 @@
+{
+  "boards": [
+    { "id": 1, "title": "Sprint 12 - Website Katalog", "createdAt": "2026-09-21T08:00:00.000Z" }
+  ],
+  "lists": [
+    { "id": 1, "boardId": 1, "title": "To Do", "position": 1000 },
+    { "id": 2, "boardId": 1, "title": "Doing", "position": 2000 },
+    { "id": 3, "boardId": 1, "title": "Done", "position": 3000 }
+  ],
+  "cards": [
+    { "id": 1, "listId": 1, "title": "Rancang halaman detail produk", "description": "Wireframe versi mobile dan desktop", "position": 1000, "createdAt": "2026-09-21T08:10:00.000Z" },
+    { "id": 2, "listId": 1, "title": "Tulis validasi form kontak", "description": "", "position": 2000, "createdAt": "2026-09-21T08:12:00.000Z" },
+    { "id": 3, "listId": 1, "title": "Riset ikon untuk kategori", "description": "Pilih set ikon berlisensi bebas", "position": 3000, "createdAt": "2026-09-21T08:15:00.000Z" },
+    { "id": 4, "listId": 2, "title": "Integrasi API daftar produk", "description": "GET /products dengan paginasi", "position": 1000, "createdAt": "2026-09-21T09:00:00.000Z" },
+    { "id": 5, "listId": 2, "title": "Perbaiki layout header di Safari", "description": "", "position": 2000, "createdAt": "2026-09-21T09:30:00.000Z" },
+    { "id": 6, "listId": 3, "title": "Setup repository dan branch", "description": "main, develop, feature/*", "position": 1000, "createdAt": "2026-09-20T07:00:00.000Z" },
+    { "id": 7, "listId": 3, "title": "Susun style guide warna", "description": "", "position": 2000, "createdAt": "2026-09-20T07:30:00.000Z" },
+    { "id": 8, "listId": 3, "title": "Deploy halaman beranda ke staging", "description": "Cek Lighthouse minimal 90", "position": 3000, "createdAt": "2026-09-20T10:00:00.000Z" }
+  ]
+}

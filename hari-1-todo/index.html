@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self'; script-src 'self'; style-src 'self';
+    img-src 'self'; font-src 'self'; connect-src 'self';
+    object-src 'none'; base-uri 'none'; form-action 'self'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Todo List - Inixindo Bandung</title>
+  <link rel="icon" href="../public/brand/logo-mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../public/brand/brand.css">
+  <link rel="stylesheet" href="../public/brand/footer.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <main>
+    <div class="brand-header">
+      <img src="../public/brand/logo-mark.svg" width="36" height="38" alt="">
+      <div>
+        <p class="eyebrow">Hari 1 &middot; Mini Proyek</p>
+        <h1>Todo List</h1>
+      </div>
+    </div>
+
+    <form id="todo-form">
+      <input id="todo-input" name="text" placeholder="Apa yang ingin dikerjakan?"
+        aria-label="Todo baru" maxlength="60" required>
+      <button type="submit">Tambah</button>
+    </form>
+    <small id="char-counter">0/60</small>
+
+    <div class="toolbar">
+      <label for="filter">Tampilkan:</label>
+      <select id="filter">
+        <option value="all">Semua</option>
+        <option value="active">Belum selesai</option>
+        <option value="done">Selesai</option>
+      </select>
+      <span id="summary"></span>
+    </div>
+
+    <ul id="todo-list"></ul>
+  </main>
+
+  <footer class="ixb-footer">
+    <span class="ixb-footer__brand">
+      <img class="ixb-footer__lockup" src="../public/brand/footer-lockup.svg" width="217" height="34"
+        alt="Inixindo Bandung">
+    </span>
+    <p class="ixb-footer__tagline">Continuous Learning, Keep Up to Date</p>
+  </footer>
+</body>
+</html>
