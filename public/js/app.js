@@ -5,27 +5,58 @@
 // mis. "/cards" -> http://localhost:3000/cards.
 const API_URL = "";
 
-// TODO: kirim request dengan fetch, header Content-Type JSON, lempar Error
-// bila !response.ok, lalu kembalikan response.json().
-async function request(path, options = {}) {}
+async function request(path, options = {}) {
+  const response = await fetch(`${API_URL}${path}`, {
+    headers: { "Content-Type": "application/json" },
+    ...options,
+  });
 
-// TODO: GET /boards
-async function getBoards() {}
+  if (!response.ok) {
+    const method = options.method ?? "GET";
+    throw new Error(`${method} ${path} gagal (status ${response.status})`);
+  }
 
-// TODO: GET /lists?boardId=...&_sort=position
-async function getLists(boardId) {}
+  return response.json();
+}
 
-// TODO: GET /cards?_sort=position
-async function getCards() {}
+async function getBoards() {
+  return request("/boards");
+}
 
-// TODO: POST /lists dan POST /cards (body: JSON.stringify(data))
-async function createList(data) {}
-async function createCard(data) {}
+async function getLists(boardId) {
+  return request(`/lists?boardId=${boardId}&_sort=position`);
+}
 
-// TODO: PATCH /lists/:id dan PATCH /cards/:id (body: perubahan saja)
-async function updateList(id, changes) {}
-async function updateCard(id, changes) {}
+async function getCards() {
+  return request("/cards?_sort=position");
+}
 
-// TODO: DELETE /lists/:id dan DELETE /cards/:id
-async function deleteList(id) {}
-async function deleteCard(id) {}
+async function createList(data) {
+  return request("/lists", { method: "POST", body: JSON.stringify(data) });
+}
+
+async function createCard(data) {
+  return request("/cards", { method: "POST", body: JSON.stringify(data) });
+}
+
+async function updateList(id, changes) {
+  return request(`/lists/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(changes),
+  });
+}
+
+async function updateCard(id, changes) {
+  return request(`/cards/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(changes),
+  });
+}
+
+async function deleteList(id) {
+  return request(`/lists/${id}`, { method: "DELETE" });
+}
+
+async function deleteCard(id) {
+  return request(`/cards/${id}`, { method: "DELETE" });
+}
