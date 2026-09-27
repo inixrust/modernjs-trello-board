@@ -185,6 +185,36 @@ function reportError(userMessage, error) {
   showStatus(userMessage, "error");
 }
 
+// ===== 5. Handler (aksi pengguna) =====
+// Pola: await API -> perbarui state TANPA mutasi -> renderBoard().
+// Bila gagal: reportError("Pesan umum untuk pengguna.", error).
+
+// TODO: POST list baru di akhir (getNextPosition(state.lists))
+async function handleCreateList(title) {}
+
+// TODO: guard bila list tidak ada, konfirmasi, DELETE, buang list DAN card-nya
+async function handleDeleteList(listId) {}
+
+// TODO: POST card baru di akhir list
+async function handleCreateCard(listId, title) {}
+
+// TODO: PATCH card, ganti card di state dengan data dari server
+async function handleUpdateCard(cardId, changes) {}
+
+// TODO: DELETE card, buang dari state
+async function handleDeleteCard(cardId) {}
+
+// TODO: guard bila card tidak ada, isi #edit-form, simpan cardId, showModal()
+function openEditDialog(cardId) {}
+
+// ===== 6. Event listener (event delegation) =====
+// TODO 1: click pada boardEl -> closest("button[data-action]") -> switch aksi
+// TODO 0: whileDisabled(form, action) -> nonaktifkan tombol submit selama request
+// TODO 2: submit pada boardEl -> isValidTitle -> handleCreateCard
+// TODO 3: submit pada addListForm -> handleCreateList
+// TODO 4: submit pada editForm -> handleUpdateCard -> editDialog.close()
+// TODO 5: click tombol data-action="cancel-edit" -> editDialog.close()
+
 // ===== 8. Inisialisasi =====
 async function init() {
   showStatus("Memuat board...", "loading");

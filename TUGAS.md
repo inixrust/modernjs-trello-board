@@ -1,23 +1,23 @@
-# Fitur 03: State dan Render Board
+# Fitur 04: CRUD dengan Event Delegation
 
-Materi: Modul Peserta Bab 10 (Hari 3).
+Materi: Modul Peserta Bab 11 (Hari 3).
 
-Lengkapi selector, fungsi render, dan `init()`.
+Lengkapi handler (bagian 5) dan listener (bagian 6).
 
 ## Kriteria selesai
 
-- [ ] Board, list, dan card tampil terurut berdasarkan `position`
-- [ ] Selector tidak memutasi state (`toSorted`, `filter`)
-- [ ] Judul card lewat `textContent`, template statis lewat `innerHTML`
-- [ ] Loading tampil (`npm run start:lambat`) dan error tampil saat server mati
-- [ ] Pesan error untuk pengguna umum; detail teknis hanya di Console (`reportError`)
+- [ ] Tambah, edit (dialog), dan hapus card tersimpan ke API
+- [ ] Tambah dan hapus list. Hapus list juga membersihkan card di state
+- [ ] Satu listener `click` dan satu `submit` di `#board`
+- [ ] State diperbarui tanpa mutasi (spread, `map`, `filter`)
+- [ ] Judul divalidasi (`isValidTitle`) dan tombol submit nonaktif selama request
 
 ## Cara mengecek
 
-Jalankan `npm start`, lalu buka <http://localhost:3000>.
+Jalankan `npm start`, lalu buka <http://localhost:3000>. Muat ulang halaman: semua perubahan harus tetap ada.
 
 Bandingkan dengan solusi setelah mencoba sendiri:
 
 ```bash
-git diff 03-render-starter 03-render-solution
+git diff 04-crud-starter 04-crud-solution
 ```
