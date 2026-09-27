@@ -1,22 +1,22 @@
-# Fitur 07: Refactor ke ES Modules
+# Fitur 08: Deep Dive: Event Loop dan Promise Sederhana
 
-Materi: Modul Peserta Bab 14 (Hari 4).
+Materi: Modul Peserta Bab 15 (Hari 4).
 
-Pindahkan kode dari `public/js/app.js` ke delapan module sesuai komentar di setiap berkas, lalu ubah tag script menjadi `type="module"`.
+Prediksi dulu output `latihan/event-loop.js` dan `latihan/event-loop-2.js`, lalu jalankan dengan Node. Setelah itu lengkapi `latihan/my-promise.js` tahap 2--4.
 
 ## Kriteria selesai
 
-- [ ] Delapan module: api, state, render, board, list, card, events, app
-- [ ] Import hanya ke lapisan yang lebih rendah (tanpa circular dependency)
-- [ ] Tidak ada `fetch` di luar `api.js`
-- [ ] Perilaku aplikasi sama persis seperti sebelum refactor
+- [ ] State hanya berubah sekali
+- [ ] `then` menyimpan callback saat pending dan menjalankannya saat selesai
+- [ ] Callback selalu asynchronous (`queueMicrotask`)
+- [ ] Uji tahap 3 dan 4 mencetak baris 1 sampai 5 berurutan
 
 ## Cara mengecek
 
-Jalankan `npm start`, lalu buka <http://localhost:3000>. Periksa tab Sources: delapan module terpisah.
+`node latihan/event-loop.js`, `node latihan/event-loop-2.js`, `node latihan/my-promise.js`
 
 Bandingkan dengan solusi setelah mencoba sendiri:
 
 ```bash
-git diff 07-modules-starter 07-modules-solution
+git diff 08-promise-starter 08-promise-solution
 ```
