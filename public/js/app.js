@@ -357,15 +357,33 @@ async function removeCard(cardId) {
   }
 }
 
-// TODO (Hari 4): ubah menjadi optimistic update dengan rollback:
-// simpan state.cards lama -> ubah state -> render() -> await updateCard
-// -> bila gagal: kembalikan state, render(), showToast(...).
+// Optimistic update: UI berubah dulu, server menyusul,
+// rollback bila gagal.
 async function moveCard({ cardId, targetListId }) {
   const card = findCard(cardId);
   if (!card || card.listId === targetListId) return;
 
-  const position = getNextPosition(getCardsByList(targetListId));
-  await editCard(cardId, { listId: targetListId, position });
+  const changes = {
+    listId: targetListId,
+    position: getNextPosition(getCardsByList(targetListId)),
+  };
+
+  state.cards = state.cards.map((item) =>
+    item.id === cardId ? { ...item, ...changes } : item,
+  );
+  render();
+
+  try {
+    await updateCard(cardId, changes);
+  } catch (error) {
+    // rollback HANYA card ini, agar pemindahan lain tidak ikut hilang.
+    // `card` masih object lama karena state tidak pernah dimutasi.
+    state.cards = state.cards.map((item) =>
+      item.id === cardId ? card : item,
+    );
+    render();
+    reportError("Gagal memindahkan card, posisi dikembalikan.", error);
+  }
 }
 
 // ===== 7. events =====
